@@ -36,12 +36,12 @@ model Profissional {
   encaminhamentos Encaminhamento[]
 }
 
- model Usuario {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  senha     String   // Aqui salvaremos a senha criptografada (hash)
-  nome      String
-  criadoEm  DateTime @default(now())
+model Usuario {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  senha    String   // Aqui salvaremos a senha criptografada (hash)
+  nome     String
+  criadoEm DateTime @default(now())
 }
 
 // 2. Tabela de Pacientes / Clientes
@@ -104,6 +104,7 @@ model Encaminhamento {
   profissionalId String
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
   observacoes    String?      // Opcional: motivo ou anotação da troca
+  dataConsulta   DateTime?    // Data agendada da consulta encaminhada
   criadoEm       DateTime     @default(now())
 }
 
