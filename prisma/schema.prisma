@@ -1,0 +1,119 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Status de Cobrança do Cliente (Calculado via Asaas / Webhook)
+enum StatusAssinatura {
+  EM_DIA
+  ATRASADO
+  INADIMPLENTE
+  BLOQUEADO
+  CANCELADO
+}
+
+// Tipo de Pagamento
+enum Formapagamento {
+  CARTAO_CREDITO
+  PIX
+}
+
+// 1. Tabela de Profissionais / Médicos Parceiros
+model Profissional {
+  id              String           @id @default(uuid())
+  nome            String
+  especialidade   String
+  contato         String
+  disponibilidade String?
+  criadoEm        DateTime         @default(now())
+  atualizadoEm    DateTime         @updatedAt
+
+  pacientes       Paciente[]       @relation("ProfissionalResponsavel")
+  encaminhamentos Encaminhamento[]
+}
+
+ model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  senha     String   // Aqui salvaremos a senha criptografada (hash)
+  nome      String
+  criadoEm  DateTime @default(now())
+}
+
+// 2. Tabela de Pacientes / Clientes
+model Paciente {
+  id                        String              @id @default(uuid())
+  nomeCompleto              String
+  cpf                       String              @unique
+  dataNascimento            DateTime
+  whatsapp                  String
+  email                     String              @unique
+  
+  // Financeiro / Plano
+  valorPlano                Decimal             @default(0.00) @db.Decimal(10, 2)
+
+  // Endereço
+  cep                       String?
+  logradouro                String?
+  numero                    String?
+  bairro                    String?
+  cidade                    String?
+  estado                    String?
+
+  // Status & Assinatura
+  status                    StatusAssinatura    @default(EM_DIA)
+  formaPagamento            Formapagamento
+  asaasCustomerId           String?             @unique
+  asaasSubscriptionId       String?             @unique
+
+  // Profissional Responsável
+  profissionalResponsavelId String?
+  profissionalResponsavel   Profissional?       @relation("ProfissionalResponsavel", fields: [profissionalResponsavelId], references: [id])
+
+  // Relacionamentos & Histórico
+  transacoes                Transacao[]
+  encaminhamentos           Encaminhamento[]
+  logsStatus                LogStatusPaciente[]
+
+  criadoEm                  DateTime            @default(now())
+  atualizadoEm              DateTime            @updatedAt
+}
+
+// 3. Tabela de Transações / Histórico de Pagamentos (Preparada para Asaas e Lançamentos Manuais)
+model Transacao {
+  id             String    @id @default(uuid())
+  pacienteId     String
+  paciente       Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  valor          Decimal   @db.Decimal(10, 2)
+  status         String    // 'PAGO', 'PENDENTE', 'ATRASADO'
+  vencimento     DateTime
+  dataPagamento  DateTime?
+  asaasPaymentId String?   @unique
+  criadoEm       DateTime  @default(now())
+}
+
+// 4. Encaminhamentos de Consultas
+model Encaminhamento {
+  id             String       @id @default(uuid())
+  pacienteId     String
+  paciente       Paciente     @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  profissionalId String
+  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+  observacoes    String?      // Opcional: motivo ou anotação da troca
+  criadoEm       DateTime     @default(now())
+}
+
+// 5. Log de Auditoria de Mudança de Status
+model LogStatusPaciente {
+  id             String           @id @default(uuid())
+  pacienteId     String
+  paciente       Paciente         @relation(fields: [pacienteId], references: [id])
+  statusAnterior StatusAssinatura
+  statusNovo     StatusAssinatura
+  motivo         String?
+  criadoEm       DateTime         @default(now())
+}
