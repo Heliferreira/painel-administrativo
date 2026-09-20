@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Users, 
@@ -46,12 +47,16 @@ export default function AdminLayout({
         <div>
           {/* Logo / Marca */}
           <div className="flex items-center gap-3 px-3 py-4 mb-6 border-b border-indigo-900">
-            <div className="w-9 h-9 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-lg">
-              A
-            </div>
+            <Image 
+  src="/logo1.png" 
+  alt="Logo" 
+  width={120} 
+  height={40} 
+  className="h-18 w-auto object-contain"
+/>
             <div>
-              <h1 className="font-bold text-base leading-tight">Acessíveis</h1>
-              <p className="text-xs text-indigo-300">Painel de Gestão</p>
+              <h1 className="font-bold text-base leading-tight"></h1>
+              <p className="text-xs text-indigo-300">Painel admin</p>
             </div>
           </div>
 
